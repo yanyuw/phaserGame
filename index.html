@@ -120,11 +120,13 @@
             text.setText("这次我想要这个！")
             //随机生成
             num = Math.floor(Math.random()*3);
+            if(sound)
+                sound.destroy()
             sound = game.add.sound(fruit[num])
 
-            sound.play()
+            // sound.play()
 
-            setTimeout(retry,2000);
+            retry()
         }
 
         function retry(){
@@ -133,6 +135,7 @@
                 return;
             }
             sound.play()
+            console.log(sound)
             timer = setTimeout(retry, 2000); 
         }
 

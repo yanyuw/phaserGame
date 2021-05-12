@@ -1,0 +1,330 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>A Game</title>
+    
+    <link href="https://fonts.googleapis.com/css?family=Poppins:500,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="script/teachablemachine.min.js" type="text/javascript"></script>
+    <!-- <script src="script/script.js" defer></script> -->
+
+    <script src="script/phaser.min.js"></script>
+    <!-- <script src="script/game.js"></script> -->
+
+    <script>
+        var game = new Phaser.Game(800, 600, Phaser.AUTO, 'gameContainer');
+        var score = 0;
+        var fruit = ['appleAudio', 'peachAudio', 'orangeAudio']
+        var num;
+        var sound;
+        var npc;
+        var gaming = true;
+        var apple, peach, orange;
+        var retryButton, nextButton;
+        var text, scoreText
+        // console.log(game)
+        function start(game){
+            this.init = function(){
+                game.scale.pageAlignHorizontally=true;//水平居中
+            }
+            this.preload = function(){
+                game.load.image('sky','assets/sky.png');
+                game.load.image('nextButton', 'assets/nextButton.png');
+                game.load.image('retryButton', 'assets/retryButton.png');
+                game.load.spritesheet('startButton','assets/startButton.png')
+                game.load.spritesheet('normal','assets/spriteSheet/normal.png',240,240,39);
+                game.load.spritesheet('eat','assets/spriteSheet/eat.png',240,240,2);
+                game.load.spritesheet('no','assets/spriteSheet/no.png',240,240,26);
+
+                
+                game.load.image('apple','assets/apple.png');
+                game.load.image('peach','assets/peach.png');
+                game.load.image('orange','assets/orange.png');
+
+                
+                game.load.audio('appleAudio','assets/music/apple.mp3');
+                game.load.audio('peachAudio','assets/music/peach.mp3');
+                game.load.audio('orangeAudio','assets/music/orange.mp3');
+                game.load.audio('rightAudio','assets/music/right.mp3');
+                game.load.audio('wrongAudio','assets/music/wrong.mp3');
+            }
+            var button;
+            var background;
+            this.create = function(){
+                background = game.add.image(0,0,'sky');
+                button = game.add.button(250, 400, 'startButton', actionOnClick, this);
+                
+                normal()
+
+                var style = { font: "bold 24px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
+
+                text = game.add.text(120, 0, "我好饿呀！小朋友快帮我收集我想要的水果吧！\n点击开始然后点击上方的“教会电脑”,\n通过动作让电脑帮你拿水果吧！", style);
+                text.setShadow(3, 3, 'rgba(0,0,0,0.5)', 2);
+
+                scoreText = game.add.text(50, 250, 'score: '+score, style)
+
+                //  We'll set the bounds to be from x0, y100 and be 800px wide by 100px high
+                text.setTextBounds(0, 100, 800, 100);
+
+                function actionOnClick () {
+                    var tmButton = document.getElementById('train-model-button');
+                    tmButton.className = ''
+                    button.visible = false;
+                    guide()
+
+                    document
+                    .querySelector('#train-model-button')
+                    .addEventListener('click', () => wizard.open())
+                    var sheet = new CSSStyleSheet()
+                    sheet.replaceSync(`ta-card {
+                        width: 1024px;
+                    }`)
+                    
+                }
+                
+                apple = game.add.sprite(100,350,'apple');
+                peach = game.add.sprite(300,200,'peach');
+                orange = game.add.sprite(500,350,'orange');
+                apple.visible = peach.visible = orange.visible = false;
+            }
+            this.update = function(){        
+            }
+        }
+        
+        function guide(){
+            
+            text.setText("点击上方的“教会电脑”吧！")
+        }
+
+        function normal(){
+            if(npc)
+                npc.kill()
+            npc = game.add.sprite(0,0,'normal')
+            var arr = []
+            for(let i = 0; i <= 39; i++){
+                arr.push(i)
+            }
+            var ani = npc.animations.add('play',arr,24,true);
+            ani.play('play');
+        }
+
+        function play(){
+            gaming = true;
+            apple.visible = peach.visible = orange.visible = true;
+
+            normal()
+
+            // retryButton = game.add.button(300, 500, 'retryButton', retry, this);            
+            text.setText("这次我想要这个！")
+            //随机生成
+            num = Math.floor(Math.random()*3);
+            sound = game.add.sound(fruit[num])
+
+            sound.play()
+
+            setTimeout(retry,2000);
+        }
+
+        function retry(){
+            if(!gaming) {    //函数结束条件
+                clearTimeout(timer);    
+                return;
+            }
+            sound.play()
+            timer = setTimeout(retry, 2000); 
+        }
+
+        function right(){
+            //选对
+            npc.kill()
+            text.setText("谢谢你，真好吃！")
+            npc = game.add.sprite(0,0,'eat')
+            var ani = npc.animations.add('play',[0,1],24,true);
+            ani.play('play');
+            var rightAudio = game.add.sound('rightAudio')
+            rightAudio.play()
+            updateScore()
+
+            next()
+        }
+
+        function wrong(){
+            //选错
+            npc.kill()            
+            text.setText("呜呜呜，我要的不是这个！")
+            npc = game.add.sprite(0,0,'no')
+            var arr = []
+            for(let i = 0; i < 26; i++){
+                arr.push(i)
+            }
+            var ani = npc.animations.add('play',arr,24,true);
+            ani.play('play');
+            var wrongAudio = game.add.sound('wrongAudio')
+            wrongAudio.play()
+
+            next()
+        }
+
+        function updateScore(){
+            score++;
+            scoreText.setText("score: " + score)
+        }
+
+        function next(){
+            gaming = false
+            // retryButton.kill()
+            // nextButton = game.add.button(300, 500, 'nextButton', ()=>play(), this);
+
+            //2.5s后下一题
+            setTimeout(function (){
+                play()
+            }, 2500);
+        }
+
+
+        game.state.add('start',start);
+        // game.state.add('play',play);
+
+        game.state.start('start');
+
+        // //防抖
+        // function debounce(fn,delay){
+        //     let timer = null
+        //     return function() {
+        //         if(timer){
+        //             clearTimeout(timer) 
+        //         }
+        //         timer = setTimeout(fn,delay) 
+        //     }
+        // }
+
+        const wizard = new tm.Wizard({
+        introduction: {
+            title: tm.html`让我们用动作控制人物的动作吧！`,
+            description: tm.html`点击 "开始", 准备看着摄像头哈`,
+        },
+        classes: [
+            {
+            name: '选择你想要的向左动作',
+            title: '记录你想要的向左动作',
+            description: '一直按着这个按钮，直到至少收集20张图片',
+            },
+            {
+            name: '选择你想要的向右动作',
+            title: '记录你想要的向右动作.',
+            description: '一直按着这个按钮，直到至少收集20张图片.',
+            },
+            {
+            name: '选择你想要的向上动作',
+            title: '记录你想要的向上动作.',
+            description: '一直按着这个按钮，直到至少收集20张图片.',
+            },
+            {
+            name: '什么都不做',
+            title: '记录你的动作.',
+            description: '一直按着这个按钮，直到至少收集20张图片.',
+            },
+        ],
+        onLoad: () => {
+            console.log('model has loaded')
+        },
+        onPrediction: (predictions) => {
+            const images = document.querySelectorAll('.prediction-image')
+            let highestProb = Number.MIN_VALUE
+            let highestIndex = -1
+            predictions.forEach((pred, i) => {
+            if (pred.probability > highestProb) {
+                highestProb = pred.probability
+                highestIndex = i
+            }
+            })
+            if (highestIndex == 0 && gaming) {
+                //向左
+                if(num == 0){
+                    right()
+                }else{
+                    wrong()
+                }
+
+                next()
+
+            }
+            if (highestIndex == 1 && gaming) {
+                //向右
+                if(num == 2){
+                    right()
+                }else{
+                    wrong()
+                }
+                next()
+
+            }
+            if (highestIndex == 2 && gaming) {
+                //向上
+                if(num == 1){
+                    right()
+                }else{
+                    wrong()
+                }
+                
+                next()
+
+            }
+            if (highestIndex == 3) {
+            }
+
+            images.forEach((img, i) => {
+            if (i === highestIndex) {
+
+            } else {
+
+            }
+            })
+        },
+        onSampleAdded: (added) => {
+            console.log(added)
+        },
+        onTrain: () => {
+            console.log('train begins')
+        },
+        onReady: () => {
+
+            const inferenceCamera = wizard.createInferenceCamera({
+            size: 270,
+            })
+            const cameraContainer = document.querySelector(
+            '#inference-camera-container'
+            )
+            cameraContainer.appendChild(inferenceCamera)
+            // mainEl.classList.add('ready')
+            //开始游戏
+            play()
+            
+        },
+        })
+        
+
+    </script>
+</head>
+<body>
+
+
+    <div id="container">
+        <!-- <header id="intro" class="flex-section">
+            <h1>教电脑看我的动作，播放和暂停</h1>
+        </header> -->
+        <div id="images" class="flex-section">
+            <div id="prediction-section">
+                <div id="inference-camera-container"></div>
+            </div>
+        </div>
+        <div id="buttons" class="flex-section">
+            <tm-button class="hidden" id="train-model-button" label="教会电脑"></tm-button>
+        </div>
+
+
+    </div>
+</body>
+</html>

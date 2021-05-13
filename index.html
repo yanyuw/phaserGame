@@ -203,6 +203,10 @@
         //     }
         // }
 
+        
+        let tmpIndex = -1;
+        let count = 0;
+        
         const wizard = new tm.Wizard({
         introduction: {
             title: tm.html`让我们用动作控制人物的动作吧！`,
@@ -235,13 +239,27 @@
         },
         onPrediction: (predictions) => {
             const images = document.querySelectorAll('.prediction-image')
-            let highestProb = Number.MIN_VALUE
+            // let highestProb = Number.MIN_VALUE
+            let highestProb = 0.4
             let highestIndex = -1
             predictions.forEach((pred, i) => {
             if (pred.probability > highestProb) {
                 highestProb = pred.probability
-                highestIndex = i
+                console.log('highestProb',highestProb, i, tmpIndex)
+                // highestIndex = i
+                if(tmpIndex == i){
+                    count++;
+                    console.log('count', count)
+                    //如果连续25帧都是同一结果则可判定
+                    if(count > 25){
+                        highestIndex = i
+                    }
+                }else{
+                    count = 0
+                    tmpIndex = i
+                }
             }
+            
             })
             if (highestIndex == 0 && gaming) {
                 //向左
